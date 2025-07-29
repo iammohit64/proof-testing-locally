@@ -1,54 +1,58 @@
 # TaskStaking dApp: Verification & Simulation
 
-This repository contains the smart contract and testing environment for a decentralized task-staking platform. The project focuses on a robust verification flow where an admin can approve or reject task completions, triggering automated ETH payouts. The entire interaction loop is tested and simulated locally using the Foundry framework.
-
-## Core Features
-
--   **On-Chain Staking:** Users stake ETH when creating a task, which is locked in the smart contract.
--   **Backend-Driven Verification:** The system is designed for an off-chain backend (played by an admin) to call the contract to manage task statuses.
--   **Automated Payout Logic:** The smart contract handles all financial resolutions automatically based on the admin's decision:
-    -   **Approval:** 100% of the stake is returned to the user.
-    -   **Partial Approval:** A configurable percentage is returned to the user, and the rest is sent to the platform.
-    -   **Rejection:** The entire stake is sent to the platform.
--   **Event-Driven Architecture:** The contract emits events (`TaskCompleted`, `TaskFailed`) that a backend can listen to for updating its database and notifying users.
-
-## Technology Stack
-
--   **Smart Contract:** Solidity `^0.8.19`
--   **Testing & Deployment:** Foundry (Anvil, Forge, Cast)
--   **Backend Simulation:** Node.js + Ethers.js
+This repository contains the smart contract and simulation setup for a decentralized task-staking platform. The system implements a full verification loop where an admin approves or rejects task completions, triggering automatic ETH payouts. All interactions are tested locally using the Foundry framework.
 
 ---
 
-## Local Setup & Installation
+## 🧩 Core Features
+
+- **🔒 On-Chain Staking:**  
+  Users stake ETH when creating tasks. The funds are locked in the contract until resolution.
+
+- **🧾 Admin Verification Flow:**  
+  An off-chain backend (admin) calls the smart contract to approve, partially approve, or reject task completions.
+
+- **💸 Automated Payout Logic:**
+  - ✅ **Approved:** 100% of the stake is refunded to the user.
+  - 🟡 **Partially Approved:** A configurable portion goes to the user; the rest to the platform.
+  - ❌ **Rejected:** The full stake is transferred to the platform.
+
+- **📡 Event Emission:**  
+  Emits `TaskCompleted` and `TaskFailed` events for backend monitoring and notifications.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Smart Contract:** Solidity `^0.8.19`
+- **Testing & Deployment:** Foundry (Anvil, Forge, Cast)
+- **Backend Simulation:** Node.js + Ethers.js
+
+---
+
+## 🧪 Local Setup & Installation
 
 ### Prerequisites
 
--   [Foundry](https://getfoundry.sh/)
--   [Node.js](https://nodejs.org/)
-
-### Installation
-
-1.  **Clone the repository:**
-    ```bash
-    git clone <YOUR_REPOSITORY_URL>
-    cd task-staking-dapp
-    ```
-
-2.  **Install Node.js dependencies:**
-    ```bash
-    npm install
-    ```
+- [Foundry](https://getfoundry.sh/)
+- [Node.js](https://nodejs.org/)
 
 ---
 
-## Running the Simulation
+### Installation
 
-This process requires three separate terminal windows to simulate the blockchain, the backend listener, and user/admin actions.
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd task-staking-dapp
+npm install
 
-### 1. Terminal 1: Start the Local Blockchain
+## 🚀 Running the Simulation (3-Terminal Setup)
 
-Start Anvil, the local testnet node. This will also provide a list of funded accounts and their private keys.
+You'll need three terminals for a full local simulation: blockchain node, contract deployment, and backend interaction.
+
+---
+
+### 🖥️ Terminal 1: Start Anvil (Local Blockchain)
 
 ```bash
 anvil
