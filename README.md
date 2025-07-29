@@ -100,5 +100,3 @@ To run the internal logic tests written in Solidity, use Forge:
 ```bash
 forge test -vv
 ```
-
-
