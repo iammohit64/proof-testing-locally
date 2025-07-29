@@ -1,66 +1,54 @@
-## Foundry
+# TaskStaking dApp: Verification & Simulation
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This repository contains the smart contract and testing environment for a decentralized task-staking platform. The project focuses on a robust verification flow where an admin can approve or reject task completions, triggering automated ETH payouts. The entire interaction loop is tested and simulated locally using the Foundry framework.
 
-Foundry consists of:
+## Core Features
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+-   **On-Chain Staking:** Users stake ETH when creating a task, which is locked in the smart contract.
+-   **Backend-Driven Verification:** The system is designed for an off-chain backend (played by an admin) to call the contract to manage task statuses.
+-   **Automated Payout Logic:** The smart contract handles all financial resolutions automatically based on the admin's decision:
+    -   **Approval:** 100% of the stake is returned to the user.
+    -   **Partial Approval:** A configurable percentage is returned to the user, and the rest is sent to the platform.
+    -   **Rejection:** The entire stake is sent to the platform.
+-   **Event-Driven Architecture:** The contract emits events (`TaskCompleted`, `TaskFailed`) that a backend can listen to for updating its database and notifying users.
 
-## Documentation
+## Technology Stack
 
-https://book.getfoundry.sh/
+-   **Smart Contract:** Solidity `^0.8.19`
+-   **Testing & Deployment:** Foundry (Anvil, Forge, Cast)
+-   **Backend Simulation:** Node.js + Ethers.js
 
-## Usage
+---
 
-### Build
+## Local Setup & Installation
 
-```shell
-$ forge build
-```
+### Prerequisites
 
-### Test
+-   [Foundry](https://getfoundry.sh/)
+-   [Node.js](https://nodejs.org/)
 
-```shell
-$ forge test
-```
+### Installation
 
-### Format
+1.  **Clone the repository:**
+    ```bash
+    git clone <YOUR_REPOSITORY_URL>
+    cd task-staking-dapp
+    ```
 
-```shell
-$ forge fmt
-```
+2.  **Install Node.js dependencies:**
+    ```bash
+    npm install
+    ```
 
-### Gas Snapshots
+---
 
-```shell
-$ forge snapshot
-```
+## Running the Simulation
 
-### Anvil
+This process requires three separate terminal windows to simulate the blockchain, the backend listener, and user/admin actions.
 
-```shell
-$ anvil
-```
+### 1. Terminal 1: Start the Local Blockchain
 
-### Deploy
+Start Anvil, the local testnet node. This will also provide a list of funded accounts and their private keys.
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+```bash
+anvil
