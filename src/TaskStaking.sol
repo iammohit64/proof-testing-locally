@@ -2,232 +2,215 @@
 pragma solidity ^0.8.19;
 
 contract TaskStaking {
-struct Task {
-    address creator;
-    uint256 stakedAmount;
-    uint256 deadline;
-    TaskStatus status;
-    bool proofSubmitted;
-    uint256 createdAt;
-}
+    struct Task {
+        address creator;
+        uint256 stakedAmount;
+        uint256 deadline;
+        TaskStatus status;
+        bool proofSubmitted;
+        uint256 createdAt;
+    }
 
-enum TaskStatus {
-    Active,      // Task created, awaiting proof
-    Submitted,   // Proof submitted, awaiting review
-    Completed,   // Approved by admin
-    Failed,      // Rejected or deadline missed
-    Cancelled    // Cancelled by user (if allowed)
-}
+    enum TaskStatus {
+        Active, // Task created, awaiting proof
+        Submitted, // Proof submitted, awaiting review
+        Completed, // Approved by admin
+        Failed, // Rejected or deadline missed
+        Cancelled // Cancelled by user (if allowed)
 
-// State variables
-mapping(uint256 => Task) public tasks;
-mapping(address => uint256[]) public userTasks;  // User's task IDs
+    }
 
-address public owner;
-address public platformWallet;
-uint256 public taskCounter;
-uint256 public minimumStake;
+    // State variables
+    mapping(uint256 => Task) public tasks;
+    mapping(address => uint256[]) public userTasks; // User's task IDs
 
-// Events
-event TaskCreated(uint256 indexed taskId, address indexed creator, uint256 stakedAmount, uint256 deadline);
-event ProofSubmitted(uint256 indexed taskId, address indexed creator);
-event TaskCompleted(uint256 indexed taskId, address indexed creator, uint256 returnedAmount);
-event TaskFailed(uint256 indexed taskId, address indexed creator, uint256 penaltyAmount);
-event PlatformWalletUpdated(address newWallet);
+    address public owner;
+    address public platformWallet;
+    uint256 public taskCounter;
+    uint256 public minimumStake;
 
-// Modifiers
-modifier onlyOwner() {
-    require(msg.sender == owner, "Not authorized");
-    _;
-}
+    // Events
+    event TaskCreated(uint256 indexed taskId, address indexed creator, uint256 stakedAmount, uint256 deadline);
+    event ProofSubmitted(uint256 indexed taskId, address indexed creator);
+    event TaskCompleted(uint256 indexed taskId, address indexed creator, uint256 returnedAmount);
+    event TaskFailed(uint256 indexed taskId, address indexed creator, uint256 penaltyAmount);
+    event PlatformWalletUpdated(address newWallet);
 
-modifier taskExists(uint256 taskId) {
-    require(tasks[taskId].creator != address(0), "Task does not exist");
-    _;
-}
+    // Modifiers
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not authorized");
+        _;
+    }
 
-modifier onlyTaskCreator(uint256 taskId) {
-    require(tasks[taskId].creator == msg.sender, "Not task creator");
-    _;
-}
+    modifier taskExists(uint256 taskId) {
+        require(tasks[taskId].creator != address(0), "Task does not exist");
+        _;
+    }
 
-constructor(address _platformWallet, uint256 _minimumStake) {
-    owner = msg.sender;
-    platformWallet = _platformWallet;
-    minimumStake = _minimumStake;
-    taskCounter = 0;
-}
+    modifier onlyTaskCreator(uint256 taskId) {
+        require(tasks[taskId].creator == msg.sender, "Not task creator");
+        _;
+    }
 
-// Create new task with stake - SIMPLIFIED VERSION
-function createTask(uint256 _deadline) external payable returns (uint256) {
-    require(msg.value >= minimumStake, "Stake amount too low");
-    require(_deadline > block.timestamp, "Deadline must be in future");
+    constructor(address _platformWallet, uint256 _minimumStake) {
+        owner = msg.sender;
+        platformWallet = _platformWallet;
+        minimumStake = _minimumStake;
+        taskCounter = 0;
+    }
 
-    taskCounter++;
+    // Create new task with stake - SIMPLIFIED VERSION
+    function createTask(uint256 _deadline) external payable returns (uint256) {
+        require(msg.value >= minimumStake, "Stake amount too low");
+        require(_deadline > block.timestamp, "Deadline must be in future");
 
-    tasks[taskCounter] = Task({
-        creator: msg.sender,
-        stakedAmount: msg.value,
-        deadline: _deadline,
-        status: TaskStatus.Active,
-        proofSubmitted: false,
-        createdAt: block.timestamp
-    });
+        taskCounter++;
 
-    userTasks[msg.sender].push(taskCounter);
+        tasks[taskCounter] = Task({
+            creator: msg.sender,
+            stakedAmount: msg.value,
+            deadline: _deadline,
+            status: TaskStatus.Active,
+            proofSubmitted: false,
+            createdAt: block.timestamp
+        });
 
-    // Emit event with Task ID for frontend to capture
-    emit TaskCreated(taskCounter, msg.sender, msg.value, _deadline);
+        userTasks[msg.sender].push(taskCounter);
 
-    return taskCounter;
-}
+        // Emit event with Task ID for frontend to capture
+        emit TaskCreated(taskCounter, msg.sender, msg.value, _deadline);
 
-// Backend calls this after proof is uploaded and validated
-function submitProof(uint256 taskId)
-    external
-    onlyOwner  // Only backend (through owner) can call this
-    taskExists(taskId)
-{
-    Task storage task = tasks[taskId];
-    require(task.status == TaskStatus.Active, "Task not active");
-    require(block.timestamp <= task.deadline, "Deadline passed");
-    require(!task.proofSubmitted, "Proof already submitted");
+        return taskCounter;
+    }
 
-    task.proofSubmitted = true;
-    task.status = TaskStatus.Submitted;
+    // Backend calls this after proof is uploaded and validated
+    function submitProof(uint256 taskId)
+        external
+        onlyOwner // Only backend (through owner) can call this
+        taskExists(taskId)
+    {
+        Task storage task = tasks[taskId];
+        require(task.status == TaskStatus.Active, "Task not active");
+        require(block.timestamp <= task.deadline, "Deadline passed");
+        require(!task.proofSubmitted, "Proof already submitted");
 
-    emit ProofSubmitted(taskId, task.creator);
-}
+        task.proofSubmitted = true;
+        task.status = TaskStatus.Submitted;
 
-// Admin approves task (full refund) - Called from backend
-function approveTask(uint256 taskId)
-    external
-    onlyOwner
-    taskExists(taskId)
-{
-    Task storage task = tasks[taskId];
-    require(task.status == TaskStatus.Submitted, "Task not submitted for review");
+        emit ProofSubmitted(taskId, task.creator);
+    }
 
-    task.status = TaskStatus.Completed;
-    uint256 refundAmount = task.stakedAmount;
+    // Admin approves task (full refund) - Called from backend
+    function approveTask(uint256 taskId) external onlyOwner taskExists(taskId) {
+        Task storage task = tasks[taskId];
+        require(task.status == TaskStatus.Submitted, "Task not submitted for review");
 
-    // Transfer stake back to user
-    payable(task.creator).transfer(refundAmount);
+        task.status = TaskStatus.Completed;
+        uint256 refundAmount = task.stakedAmount;
 
-    emit TaskCompleted(taskId, task.creator, refundAmount);
-}
-
-// Admin rejects task with partial refund - Called from backend
-function rejectTaskPartial(uint256 taskId, uint256 refundPercentage)
-    external
-    onlyOwner
-    taskExists(taskId)
-{
-    require(refundPercentage <= 100, "Invalid percentage");
-
-    Task storage task = tasks[taskId];
-    require(task.status == TaskStatus.Submitted, "Task not submitted for review");
-
-    task.status = TaskStatus.Failed;
-
-    uint256 refundAmount = (task.stakedAmount * refundPercentage) / 100;
-    uint256 penaltyAmount = task.stakedAmount - refundAmount;
-
-    // Transfer partial refund to user
-    if (refundAmount > 0) {
+        // Transfer stake back to user
         payable(task.creator).transfer(refundAmount);
+
+        emit TaskCompleted(taskId, task.creator, refundAmount);
     }
 
-    // Transfer penalty to platform
-    if (penaltyAmount > 0) {
+    // Admin rejects task with partial refund - Called from backend
+    function rejectTaskPartial(uint256 taskId, uint256 refundPercentage) external onlyOwner taskExists(taskId) {
+        require(refundPercentage <= 100, "Invalid percentage");
+
+        Task storage task = tasks[taskId];
+        require(task.status == TaskStatus.Submitted, "Task not submitted for review");
+
+        task.status = TaskStatus.Failed;
+
+        uint256 refundAmount = (task.stakedAmount * refundPercentage) / 100;
+        uint256 penaltyAmount = task.stakedAmount - refundAmount;
+
+        // Transfer partial refund to user
+        if (refundAmount > 0) {
+            payable(task.creator).transfer(refundAmount);
+        }
+
+        // Transfer penalty to platform
+        if (penaltyAmount > 0) {
+            payable(platformWallet).transfer(penaltyAmount);
+        }
+
+        emit TaskFailed(taskId, task.creator, penaltyAmount);
+    }
+
+    // Admin fully rejects task (no refund) - Called from backend
+    function rejectTaskFull(uint256 taskId) external onlyOwner taskExists(taskId) {
+        Task storage task = tasks[taskId];
+        require(task.status == TaskStatus.Submitted, "Task not submitted for review");
+
+        task.status = TaskStatus.Failed;
+        uint256 penaltyAmount = task.stakedAmount;
+
+        // Transfer full stake to platform
         payable(platformWallet).transfer(penaltyAmount);
+
+        emit TaskFailed(taskId, task.creator, penaltyAmount);
     }
 
-    emit TaskFailed(taskId, task.creator, penaltyAmount);
-}
+    // Handle expired tasks (anyone can call)
+    function handleExpiredTask(uint256 taskId) external taskExists(taskId) {
+        Task storage task = tasks[taskId];
+        require(task.status == TaskStatus.Active, "Task not active");
+        require(block.timestamp > task.deadline, "Task not expired");
 
-// Admin fully rejects task (no refund) - Called from backend
-function rejectTaskFull(uint256 taskId)
-    external
-    onlyOwner
-    taskExists(taskId)
-{
-    Task storage task = tasks[taskId];
-    require(task.status == TaskStatus.Submitted, "Task not submitted for review");
+        task.status = TaskStatus.Failed;
+        uint256 penaltyAmount = task.stakedAmount;
 
-    task.status = TaskStatus.Failed;
-    uint256 penaltyAmount = task.stakedAmount;
+        // Transfer stake to platform
+        payable(platformWallet).transfer(penaltyAmount);
 
-    // Transfer full stake to platform
-    payable(platformWallet).transfer(penaltyAmount);
+        emit TaskFailed(taskId, task.creator, penaltyAmount);
+    }
 
-    emit TaskFailed(taskId, task.creator, penaltyAmount);
-}
+    // Get user's task IDs
+    function getUserTasks(address user) external view returns (uint256[] memory) {
+        return userTasks[user];
+    }
 
-// Handle expired tasks (anyone can call)
-function handleExpiredTask(uint256 taskId)
-    external
-    taskExists(taskId)
-{
-    Task storage task = tasks[taskId];
-    require(task.status == TaskStatus.Active, "Task not active");
-    require(block.timestamp > task.deadline, "Task not expired");
+    // Get task details - SIMPLIFIED VERSION
+    function getTask(uint256 taskId)
+        external
+        view
+        returns (
+            address creator,
+            uint256 stakedAmount,
+            uint256 deadline,
+            TaskStatus status,
+            bool proofSubmitted,
+            uint256 createdAt
+        )
+    {
+        Task storage task = tasks[taskId];
+        return (task.creator, task.stakedAmount, task.deadline, task.status, task.proofSubmitted, task.createdAt);
+    }
 
-    task.status = TaskStatus.Failed;
-    uint256 penaltyAmount = task.stakedAmount;
+    // Admin functions
+    function updatePlatformWallet(address _newWallet) external onlyOwner {
+        platformWallet = _newWallet;
+        emit PlatformWalletUpdated(_newWallet);
+    }
 
-    // Transfer stake to platform
-    payable(platformWallet).transfer(penaltyAmount);
+    function updateMinimumStake(uint256 _newMinimum) external onlyOwner {
+        minimumStake = _newMinimum;
+    }
 
-    emit TaskFailed(taskId, task.creator, penaltyAmount);
-}
+    // Get contract stats
+    function getContractStats()
+        external
+        view
+        returns (uint256 totalTasks, uint256 contractBalance, address currentPlatformWallet)
+    {
+        return (taskCounter, address(this).balance, platformWallet);
+    }
 
-// Get user's task IDs
-function getUserTasks(address user) external view returns (uint256[] memory) {
-    return userTasks[user];
-}
-
-// Get task details - SIMPLIFIED VERSION
-function getTask(uint256 taskId) external view returns (
-    address creator,
-    uint256 stakedAmount,
-    uint256 deadline,
-    TaskStatus status,
-    bool proofSubmitted,
-    uint256 createdAt
-) {
-    Task storage task = tasks[taskId];
-    return (
-        task.creator,
-        task.stakedAmount,
-        task.deadline,
-        task.status,
-        task.proofSubmitted,
-        task.createdAt
-    );
-}
-
-// Admin functions
-function updatePlatformWallet(address _newWallet) external onlyOwner {
-    platformWallet = _newWallet;
-    emit PlatformWalletUpdated(_newWallet);
-}
-
-function updateMinimumStake(uint256 _newMinimum) external onlyOwner {
-    minimumStake = _newMinimum;
-}
-
-// Get contract stats
-function getContractStats() external view returns (
-    uint256 totalTasks,
-    uint256 contractBalance,
-    address currentPlatformWallet
-) {
-    return (taskCounter, address(this).balance, platformWallet);
-}
-
-// Emergency withdraw (owner only)
-function emergencyWithdraw() external onlyOwner {
-    payable(owner).transfer(address(this).balance);
-}
+    // Emergency withdraw (owner only)
+    function emergencyWithdraw() external onlyOwner {
+        payable(owner).transfer(address(this).balance);
+    }
 }

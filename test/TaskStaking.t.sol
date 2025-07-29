@@ -7,7 +7,7 @@ import {TaskStaking} from "../src/TaskStaking.sol";
 contract TaskStakingTest is Test {
     TaskStaking public taskStaking;
     address public owner = address(0x1); // Represents the backend/admin
-    address public user = address(0x2);  // Represents the task creator
+    address public user = address(0x2); // Represents the task creator
     address public platformWallet = address(0x3);
 
     // Initial setup runs before each test
@@ -50,7 +50,7 @@ contract TaskStakingTest is Test {
         // 3. Assertions
         assertEq(user.balance, userInitialBalance + 0.1 ether, "User should get full stake back");
         (,,, TaskStaking.TaskStatus status,,) = taskStaking.getTask(taskId);
-        assertEq(uint(status), uint(TaskStaking.TaskStatus.Completed), "Task status should be Completed");
+        assertEq(uint256(status), uint256(TaskStaking.TaskStatus.Completed), "Task status should be Completed");
     }
 
     // Test Case 2: Admin partially approves (35% refund)
@@ -76,7 +76,7 @@ contract TaskStakingTest is Test {
         assertEq(user.balance, userInitialBalance + userRefund, "User should get 35% stake back");
         assertEq(platformWallet.balance, platformInitialBalance + platformCut, "Platform should get 65% of stake");
         (,,, TaskStaking.TaskStatus status,,) = taskStaking.getTask(taskId);
-        assertEq(uint(status), uint(TaskStaking.TaskStatus.Failed), "Task status should be Failed");
+        assertEq(uint256(status), uint256(TaskStaking.TaskStatus.Failed), "Task status should be Failed");
     }
 
     // Test Case 3: Admin fully rejects (0% refund)
@@ -99,6 +99,6 @@ contract TaskStakingTest is Test {
         assertEq(user.balance, userInitialBalance, "User should get no refund");
         assertEq(platformWallet.balance, platformInitialBalance + 0.1 ether, "Platform should get full stake");
         (,,, TaskStaking.TaskStatus status,,) = taskStaking.getTask(taskId);
-        assertEq(uint(status), uint(TaskStaking.TaskStatus.Failed), "Task status should be Failed");
+        assertEq(uint256(status), uint256(TaskStaking.TaskStatus.Failed), "Task status should be Failed");
     }
 }

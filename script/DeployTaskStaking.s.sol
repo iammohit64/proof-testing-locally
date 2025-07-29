@@ -20,7 +20,7 @@ contract DeployTaskStaking is Script {
         vm.stopBroadcast();
 
         console.log(" TaskStaking contract deployed to:", address(taskStaking));
-        
+
         return address(taskStaking);
     }
 }
